@@ -1,0 +1,110 @@
+* {
+	box-sizing: border-box;
+}
+
+
+
+
+.fb-color{
+    background-color: #3b539b;
+}
+
+.text-logo{
+    font-size: 20px;
+    color: white;
+}
+.header_img{
+    width: 33%
+}
+
+.topbar {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+}
+
+.theme_bg_color{
+   background-color: #3b539b; 
+}
+
+.theme_color{
+   color: #3b539b; 
+}
+
+p {
+    color:black;
+}
+
+
+.page_title {
+font-size: 60px;
+color: black;
+border-bottom : 1px solid grey;
+height: 80px;
+padding: 10px;
+margin: 20px;
+}
+
+.page_content {
+padding: 10px;
+margin: 20px;
+}
+
+.btn-primary {
+color: salmon;
+}
+
+
+.title {
+	width: 100%;
+    height: 60px;
+    border-bottom : 1px solid grey;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    height: 1000px;
+
+    background-color: salmon;
+}
+
+.content {
+    position: absolute;
+    top: 0px;
+    left: 200px;
+    width: 100%;
+    height: 100%;
+    border : 2px dashed red;
+    margin: 5px;
+    padding: 15px;
+    padding-bottom: 10px;
+    padding-top: 0px;
+}
+
+.sidebar {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 200px;
+    height: 100%;
+    background-color: lightblue;
+    padding: 10px;
+}
+
+.late_plate{
+    background-color: lightblue;
+     border : 2px gray; 
+     position: absolute; 
+     right: 10px; 
+     width: 250px;
+}
+
+
+@media (max-width: 800px) {
+  /* CSS that should be displayed if width is equal to or less than 800px goes here */
+  .late_plate{
+    background-color: blue;
+     position: relative; 
+}
+}

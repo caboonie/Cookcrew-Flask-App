@@ -1,0 +1,114 @@
+<html>
+  <head>
+     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <!--js-->
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  
+
+  <script>
+  $(document).ready(function(){
+  var count=2;
+  $(".add").click(function() {
+      var a=$("#default_form").clone(true)
+      a.css("visibility","visible");
+      a.children("#ing_id").attr("name","ingredient_"+String(count))
+      a.children("#amount_id").attr("name","amount_"+String(count))
+      a.children("#meas_id").attr("name","measurement_"+String(count))
+      a.insertBefore("#add_button");
+      count=count+1;
+      return false;
+  });
+
+  $(".remove").click(function() {
+      $(this).parent().remove();
+      count=count-1;
+  });
+  });
+  </script>
+
+  </head>
+<body>
+
+  {% extends 'basic_page.html' %}
+
+  
+  {% block content %}
+
+  <div class=page_title>
+      Add Recipe
+  </div>
+  <div class=page_content>
+
+
+<form method=post>
+    Add from allrecipes link (don't forget category):<input type="text" name="url" placeholder="https://www...">
+    <br>
+    <label>Category:</label><select name="category">
+      <option value="Vegetable">Vegetable</option>
+      <option value="Carb">Carb</option>
+      <option value="Dessert">Dessert</option>
+      <option value="Main">Main</option>
+    </select>
+    
+    <br>
+    <label>Recipe Name:</label> <input type="text" name="name" placeholder="Tasty Meal...">
+    <label>Number of Servings:</label> <input type="text" name="servings" placeholder="6...">
+
+    <div id=default_form style="visibility: hidden;" class="autocomplete" style="width:300px;">
+          <label>Ingredient:</label> <input id="ing_id"" autocomplete="off" type="text" class="ing_box" name="ingredient" placeholder="asparagus">
+        <label>Amount:</label> <input id = "amount_id" type="text" name="amount" placeholder="1">
+        <label>Measurement:</label> <input id="meas_id" type="text" autocomplete="off" class="meas_box" name="measurement" placeholder="pound">
+
+          <span class="remove">Remove</span>
+    </div>
+    
+    <div class="autocomplete" >
+          <label>Ingredient:</label> <input autocomplete="off" type="text" class="ing_box" name="ingredient_1" placeholder="asparagus">
+        <label>Amount:</label> <input type="text" name="amount_1" placeholder="1">
+        <label>Measurement:</label> <input type="text"  autocomplete="off" class="meas_box" name="measurement_1" placeholder="pound">
+
+          <span class="remove">Remove</span>
+    </div>
+
+
+    <p id="add_button">
+        <span class="add">Add fields</span>
+    </p>
+    <label>Recipe Instructions:</label>  
+    <p></p><textarea name="recipe" cols="150" rows="10"></textarea>
+    <p></p>
+    
+    <button class="btn btn-primary" type="submit">Submit</button>
+</form>
+</div>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+    {{ super() }}
+  <!--BOOTSTRAP Javascript import-->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <script>
+
+/*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+
+$(".ing_box").click(function() {
+  autocomplete(this,{{ingredient_list|tojson}},'75px')
+});
+$(".meas_box").click(function() {
+  autocomplete(this,{{measure_list|tojson}},'630px')
+});
+</script>
+
+
+{%endblock%}
+</body>
+</html>

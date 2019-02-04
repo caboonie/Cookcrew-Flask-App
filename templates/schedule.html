@@ -1,0 +1,151 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+
+    
+    <style type="text/css">
+      .page_title {
+        /*size: 100px;
+        height: 80px; */
+        font-size: 60px;
+        color: black;
+        border-bottom : 1px solid grey;
+        height: 80px;
+        padding: 10px;
+        margin: 20px;
+        
+      }
+      .page_content {
+        padding: 10px;
+        margin: 20px;
+      }
+
+    </style>
+
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"> 
+
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+    $(document).ready(function(){
+    days = ["Sunday Brunch","Sunday Dinner","Monday Dinner","Tuesday Dinner","Wednesday Dinner","Thursday Dinner"];
+
+    var weekday = new Array(7);
+    weekday[0] =  "Sunday";
+    weekday[1] = "Monday";
+    weekday[2] = "Tuesday";
+    weekday[3] = "Wednesday";
+    weekday[4] = "Thursday";
+    weekday[5] = "Friday";
+    weekday[6] = "Saturday";
+    var d = new Date();
+    var day = d.toString().slice(4,10);
+
+    $("#day").html("<h3>Showing menu for "+weekday[d.getDay()]+", "+day+"</h3>");
+   
+ 
+    
+
+    });
+  </script>
+  </head>
+<body>
+  {% extends 'basic_page.html' %}
+
+  
+  {% block content %}
+
+  
+  <div class=page_title>
+      Schedule
+  </div>
+  <div class=page_content>
+  {% if current_user.is_anonymous %}
+          <h3>You need to <a href="/login">login</a> to view menus</h3>
+  {% else %}
+          
+  
+  
+    <form method=post autocomplete="off">
+      <h3 id="day"></h3>
+      <button class="btn btn-secondary " type="submit" name="previous" value="previous">Previous</button>
+      <button class="btn btn-secondary theme_bg_color"  type="submit" name="this" value="this">This Week</button>
+      <button class="btn btn-secondary"  type="submit" name="next" value="next">Next Week</button>
+    </form>
+
+
+    <p id="demo">test</p>
+
+    {{for menus in [this_menus,next_menus]}}
+      {% if menus != []%}
+        <script>
+          $("#demo").html("<b>The menu today is:</b>");
+        </script>
+        {%for menu in menus%}
+        <h3>
+          <a href="menus/{{menu.id}}">{{menu.day_name}}</a>
+        </h3>
+        <h3>
+          {{for cook in menu.cook_list}}
+          <span onclick="swap_set('{{cook}}','{{menu.day_name}}','{{menu.date}}'">{{cook}}</span>
+          {{%endfor%}}
+        </h3>
+        {%endfor%}
+
+      {%else%}
+        <script>
+          $("#demo").html("<b>There is no menu this week</b>");
+        </script>
+      {%endif%}
+      {% endif %}
+    {%endfor%}
+    
+    {% endblock %}
+
+    <script type="text/javascript">
+      function swap_set(name,day_name,date_string){
+        if(document.getElementById("cook_1").value ==''){
+          document.getElementById("cook_1").value = name;
+          document.getElementById("meal_1").value = day_name;
+          document.getElementById("date_1").value = date_string;//need to tun into appropriate type
+        }
+        else{
+          document.getElementById("cook_2").value = name;
+          document.getElementById("meal_2").value = day_name;
+          document.getElementById("date_2").value = date_string;//need to tun into appropriate type
+        }
+      }
+    </script>
+
+    <h3>Swap Form</h3>
+    <form method="POST">
+      <label>Cook 1:</label> <input class="cook_box" data-offset="70px" name="cook_1" id="cook_1" type="text" placeholder="AJ">
+      <input type="dropdown" name="meal_1" id="meal_1">
+      <label>Original Week of Cook 1:</label><input type="data" name="date_1" id="date_1"> <!-- Automatically do this week? -->
+      <label>Cook 2:</label> <input class="cook_box" data-offset="70px" name="cook_2" id="cook_2" type="text" placeholder="Melissa">
+      <input type="dropdown" name="meal_2" id="meal_2">
+      <label>Original Day of Cook 2:</label><input type="data" name="date_2" id="date_2">
+      <button id="submit_button" class="btn btn-primary" type="submit">Swap!</button>
+    </form>
+
+</div>
+
+  
+  <!--BOOTSTRAP Javascript import-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+ <script>
+
+
+$(".cook_box").click(function() {
+  autocomplete(this,{{cook_list|tojson}}, this.getAttribute("data-offset"))
+});
+
+</script>
+
+</body>
+</html>

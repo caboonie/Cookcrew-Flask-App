@@ -1,0 +1,358 @@
+/* Copyright 2013 Chris Wilson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+var audioContext = new AudioContext();
+var audioInput = null,
+    realAudioInput = null,
+    inputPoint = null,
+    audioRecorder = null;
+var rafID = null;
+var analyserContext = null;
+var canvasWidth, canvasHeight;
+var recIndex = 0;
+var timeSinceLastNoise = 0;
+var noiseThreshold = 175;
+var timeThreshold = 100;
+var startedTalking = false;
+var timeSinceLastStream = 0;
+var streamThreshold = 300;
+var should_stream = true;
+
+/* TODO:
+
+- offer mono option
+- "Monitor input" switch
+*/
+
+//Where is this function used? GUess it's not
+function saveAudio() {
+    audioRecorder.exportWAV( doneEncoding );
+    // could get mono instead by saying
+    // audioRecorder.exportMonoWAV( doneEncoding );
+}
+
+function gotBuffers( buffers ) {
+    // the ONLY time gotBuffers is called is right after a new recording is completed - 
+    // so here's where we should set up the download.
+    audioRecorder.exportWAV( doneEncoding );
+}
+
+function streamBuffers( buffers ) {
+    // the ONLY time gotBuffers is called is right after a new recording is completed - 
+    // so here's where we should set up the download.
+    audioRecorder.exportWAV( sendStream );
+}
+
+function storeAndRedirect( buffer) {
+    console.log("storing and directing!")
+    document.cookie = buffer;
+    window.location.href = "/speech-post";
+}
+
+function BinaryToString(binary) {
+    var error;
+
+    try {
+        return decodeURIComponent(escape(binary));
+    } catch (_error) {
+        error = _error;
+        if (error instanceof URIError) {
+            return binary;
+        } else {
+            throw error;
+        }
+    }
+}
+
+function doneEncoding( blob ) {
+    //instead of downloading, post this file
+    console.log("blob!")
+    
+    var form = new FormData();
+    form.append('file', blob, "audio_file.WAV");
+    //Chrome inspector shows that the post data includes a file and a title.     
+    $.ajax({
+        type: 'POST',
+        url: '/speech',
+        data: form,
+        cache: false,
+        processData: false,
+        contentType: false,
+        success:function(response) {
+            console.log("redirecting? "+  response.redirect)
+            console.log(response.stay)
+            if (response.redirect) {
+                // data.redirect contains the string URL to redirect to
+                console.log("redirecting")
+                window.location.href = response.url;
+            }
+            else if( response.stay ){
+                console.log("try again")
+                document.getElementById("record").style.display = "block";
+                document.getElementById("processing").style.display = "none";
+                
+               
+                document.getElementById("message").innerHTML = response.message;
+                should_stream = true;
+
+            } 
+            else {
+                // data.form contains the HTML for the replacement form
+                console.log("overwriting")
+                document.write(response.template); 
+            }   
+        }
+    })
+}
+
+function sendStream( blob ) {
+    //instead of downloading, post this file
+    
+    console.log("got blob! posting stream!")
+    
+    var form = new FormData();
+    form.append('file', blob, "stream.WAV");
+    //Chrome inspector shows that the post data includes a file and a title.     
+    $.ajax({
+        type: 'POST',
+        url: '/speech',
+        data: form,
+        cache: false,
+        processData: false,
+        contentType: false,
+        //dataType: "json",
+        success:function(response) {
+            console.log("stream posted")
+            console.log(response.record)
+            if (response.record) {
+                // data.redirect contains the string URL to redirect to
+                console.log("redirecting to record")
+                window.location.href = response.url;
+
+            }
+            audioRecorder.clear();
+            audioRecorder.record();
+        }
+    })
+}
+
+function stopRecording(){
+    //toggle off if recording
+    if (document.getElementById("record").classList.contains("recording")){
+        console.log("stopping recording")
+        audioRecorder.stop();
+        document.getElementById("record").classList.remove("recording");
+        audioRecorder.getBuffers( gotBuffers );
+        document.getElementById("analyser").style.display = "none";
+        document.getElementById("processing").style.display = "block";
+    }
+}
+
+function toggleRecording( e ) {
+    console.log("toggle called, e: "+e.classList.contains("recording"))
+    if (e.classList.contains("recording")) {
+        console.log("e contained recording")
+        // stop recording
+        stopRecording();
+    } else {
+        // start recording
+        console.log("Toggling to start 0")        
+        if (!audioRecorder){
+            console.log("no audioRecorder?")
+            return;
+        }
+        console.log("Toggling to start 1")
+        timeSinceLastNoise = 0;
+        e.classList.add("recording");
+        console.log("Toggling to start 2")
+        audioRecorder.clear();
+        audioRecorder.record();
+        console.log("Toggling to start 3")
+        document.getElementById("analyser").style.display = "block";
+        document.getElementById("record").style.display = "none";
+        console.log("Toggled to start")
+        should_stream = false;
+    }
+}
+
+function convertToMono( input ) {
+    var splitter = audioContext.createChannelSplitter(2);
+    var merger = audioContext.createChannelMerger(2);
+
+    input.connect( splitter );
+    splitter.connect( merger, 0, 0 );
+    splitter.connect( merger, 0, 1 );
+    return merger;
+}
+
+function cancelAnalyserUpdates() {
+    window.cancelAnimationFrame( rafID );
+    rafID = null;
+}
+
+function updateAnalysers(time) {
+    if (!analyserContext) {
+        var canvas = document.getElementById("analyser");
+        canvasWidth = canvas.width;
+        canvasHeight = canvas.height;
+        analyserContext = canvas.getContext('2d');
+    }
+
+    // analyzer draw code here
+    {
+        var SPACING = 3;
+        var BAR_WIDTH = 1;
+        var numBars = Math.round(canvasWidth / SPACING);
+        var freqByteData = new Uint8Array(analyserNode.frequencyBinCount);
+
+
+        analyserNode.getByteFrequencyData(freqByteData); 
+
+        analyserContext.clearRect(0, 0, canvasWidth, canvasHeight);
+        analyserContext.fillStyle = '#F6D565';
+        analyserContext.lineCap = 'round';
+        var multiplier = analyserNode.frequencyBinCount / numBars;
+
+        //console.log(timeSinceLastNoise)
+        timeSinceLastNoise++;
+        //timeSinceLastStream++;
+        if (timeSinceLastNoise >= timeThreshold && startedTalking){
+            stopRecording();
+            timeSinceLastNoise = 0
+        }
+        /*
+        if(timeSinceLastStream >= streamThreshold && should_stream && !document.getElementById("record").classList.contains("recording")){ //don't stream if trying to record speech
+            console.log("Streaming audio")
+            timeSinceLastStream = 0
+            audioRecorder.stop();
+            audioRecorder.getBuffers( streamBuffers );
+        }
+        */
+        // Draw rectangle for each frequency bin.
+        var maxMag = 0;
+        for (var i = 0; i < numBars; ++i) {
+            var magnitude = 0;
+            var offset = Math.floor( i * multiplier );
+            // gotta sum/average the block, or we miss narrow-bandwidth spikes
+            for (var j = 0; j< multiplier; j++)
+                magnitude += freqByteData[offset + j];
+            magnitude = magnitude / multiplier;
+            var magnitude2 = freqByteData[i * multiplier];
+            if(startedTalking){
+                analyserContext.fillStyle = "hsl( " + Math.round((i*360)/numBars) + ", 100%, 25%)";
+            }
+            else{
+                analyserContext.fillStyle = "hsl( " + 10 + ", 100%, 0%)";
+            }
+            analyserContext.fillRect(i * SPACING, Math.round(canvasHeight/2+magnitude/2), BAR_WIDTH, -magnitude);
+            //console.log("magnitude"+magnitude)
+            if (magnitude>maxMag){
+                maxMag = magnitude
+            }
+            if (magnitude >= noiseThreshold){
+                //console.log("magnitude"+magnitude)
+                if(!startedTalking && timeSinceLastNoise>20 && document.getElementById("record").classList.contains("recording")){ //buffer to prevent click from counting the mouse click
+                    console.log("Started Talking")
+                    startedTalking = true;
+                }
+                else if(!startedTalking && document.getElementById("record").classList.contains("recording")){
+                    noiseThreshold = magnitude+75; //this is the background level
+                    console.log("resetting noiseThreshold")
+                }
+                timeSinceLastNoise = 0;
+            }
+        }
+        //console.log("max magnitude"+maxMag)
+    }
+    
+    rafID = window.requestAnimationFrame( updateAnalysers );
+}
+
+function toggleMono() {
+    if (audioInput != realAudioInput) {
+        audioInput.disconnect();
+        realAudioInput.disconnect();
+        audioInput = realAudioInput;
+    } else {
+        realAudioInput.disconnect();
+        audioInput = convertToMono( realAudioInput );
+    }
+
+    audioInput.connect(inputPoint);
+}
+
+function gotStream(stream) {
+    inputPoint = audioContext.createGain();
+
+    // Create an AudioNode from the stream.
+    realAudioInput = audioContext.createMediaStreamSource(stream);
+    audioInput = realAudioInput;
+    audioInput.connect(inputPoint);
+
+//    audioInput = convertToMono( input );
+
+    analyserNode = audioContext.createAnalyser();
+    analyserNode.fftSize = 2048;
+    inputPoint.connect( analyserNode );
+
+    audioRecorder = new Recorder( inputPoint );
+
+    zeroGain = audioContext.createGain();
+    zeroGain.gain.value = 0.0;
+    inputPoint.connect( zeroGain );
+    zeroGain.connect( audioContext.destination );
+
+    var query = window.location.search.substring(1);
+    console.log("query "+query)
+    if(query=="start_record=True"){
+        console.log("START RECORD!")
+        var elem = document.getElementById("record")
+        elem.onclick.apply(elem);
+        console.log("should have toggled by now")
+    }
+    console.log("starting recording")
+    audioRecorder.clear();
+    audioRecorder.record();
+    updateAnalysers();
+}
+
+function initAudio() {
+        if (!navigator.getUserMedia)
+            navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+        if (!navigator.cancelAnimationFrame)
+            navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
+        if (!navigator.requestAnimationFrame)
+            navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+
+    navigator.getUserMedia(
+        {
+            "audio": {
+                "mandatory": {
+                    "googEchoCancellation": "false",
+                    "googAutoGainControl": "false",
+                    "googNoiseSuppression": "false",
+                    "googHighpassFilter": "false"
+                },
+                "optional": []
+            },
+        }, gotStream, function(e) {
+            alert('Error getting audio');
+            console.log(e);
+        });
+}
+
+window.addEventListener('load', initAudio );

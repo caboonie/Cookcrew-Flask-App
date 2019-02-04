@@ -1,0 +1,261 @@
+ <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <script>
+    $(document).ready(function(){
+
+    $(".remove").click(function() {
+      $(this).parent().remove();
+    });
+    });
+    </script>
+
+    <style type="text/css">
+      @media only screen and (max-width: 1200px) {
+        left_sidebar {
+          position: relative;
+        }
+        main_content {
+          position: relative;
+        }
+      }
+
+    </style>
+  </head>
+<body>
+{% extends 'basic_page.html' %}
+
+{% block content %}
+
+<div class=page_title>
+      {{menu.day}} - {{menu.day_name}}
+</div>
+<div class=page_content style="overflow: wrap;">
+  <div class = main_content>
+    <div class=recipe_content>
+      {%for recipe in dishes%}
+      <h2>
+        <a href="/recipes/{{recipe.id}}" style="color:black;">{{recipe.name}}</a> - {{recipe.category}}
+      </h2>
+
+      <table> 
+        {% for ingredient in recipe.ingredients%}
+        <tr >
+          <td > {{ingredient}} </td>
+          <td> {{recipe.ingredients[ingredient][0]|float()*menu.servings/recipe.servings|float()}} </td>
+          <td > {{recipe.ingredients[ingredient][1]}} </td>
+        </tr>
+        {% endfor%}
+      </table>
+
+    
+      <h3>Directions</h3>
+      <div class = direction_box>
+        {%for line in recipe.recipe.split('\r\n')%}
+            {{line}}<br>
+          {%endfor%}
+        
+      </div>
+      {%endfor%}
+    </div>
+  </div>
+
+
+
+  <div class="left_sidebar">
+    <div class="left_box" >
+      <h4>Late Plates</h4>
+      <form method=post>
+        {%for name in menu.late_plates%}
+        <div>
+          <input type="text" name="{{name}}" value="{{name}}" style='display:inline;'>
+          <span class = remove>X</span>
+        </div>
+        {%endfor%}
+        <input type="text" name="name" placeholder="Add a name...">
+        <input type="submit" value="Add" name="late_plate_submit">
+      </form>
+    </div>
+
+    <div class="left_box" >
+      <h4>Ingredient Check</h4>
+      <form method=post >
+        <input autocomplete="off" type="text" class="ing_box" name="ingredient" placeholder="Is anyone else using ...">
+        <input type="submit" value="Check" name="ingredient_check_submit">
+      </form>
+      {%if ing_check != []%}
+        <p>{{ing_check[0]}}</p>
+        {%if ing_check[1]!=[]%}
+
+          {%for entry in ing_check[1]%}
+            <p>{{entry[0]}} needs {{entry[1]}} {{entry[2]}} of {{entry[3]}}</p>
+          {%endfor%}
+        {%else%}
+          <p>No one uses that this week</p>
+        {%endif%}
+      {%endif%}
+    </div>
+  
+    <div class="left_box" >
+      <h4>GroupMe</h4>
+     
+     
+      <div id="message_box" style="overflow: auto; max-height:400px;">
+      </div>
+
+  
+      <br>
+      <div style="margin-left: 40px">
+        <input  type="test" id="message"  placeholder="Send Message">
+        <p onclick="postGroupMe(document.getElementById('message').value)" class="button">Send</p>
+        <br>
+        <p onclick="postGroupMe('Essen!')" class="button">Call Essen!</p>
+        <br>
+        <input style="width: 40px" type="number" id="minutes" placeholder="x">
+        <p onclick="postGroupMe('Essen will be '+document.getElementById('minutes').value+' minutes late.')" class="button">Minutes Late</p>
+      </div>
+    
+      <script type="text/javascript">
+          
+          function postGroupMe(text){
+            var form = new FormData();
+            form.append('message', text);
+
+            $.ajax({
+              type: 'POST',
+              url: '/postGroupMe',
+              data: form,
+              cache: false,
+              processData: false,
+              contentType: false,
+              success:function(response) {
+                cur_scroll = document.body.scrollTop
+                //console.log("stream posted")
+                console.log(response.length)
+                if (response.length>0) {
+                    console.log("creating messages")
+                    // data.redirect contains the string URL to redirect to
+                    message_box = document.getElementById("message_box")
+                    message_box.innerHTML = "";
+
+                    for(var i = response.length-1 ;i>=0;i--){
+                      console.log(i,response[String(i)].avatar)
+                               
+                      message = document.createElement("DIV");
+                      message.innerHTML = '<div style="width:40px; height: 40px; float:left; ">  <img id="avatar" src="'+response[String(i)].avatar+'" height="100%" width="100%" style="border-radius: 50%; margin-top: 5px">  </div>   <div style="margin-left: 43px;">     <span id = "name" style="color:gray">'+response[String(i)].name+'</span><br>  <span id="text">'+response[String(i)].text+'</span><br>    </div> <br>'
+
+                      message_box.appendChild(message);
+                    }
+                }
+                else{
+                  document.getElementById('message_box').innerHTML = "<p>Messaging is down, sorry!</p>"
+                }
+              }
+            })  
+          }
+          
+          postGroupMe("NO-POST")
+        </script>
+    </div>
+
+
+    <div class="left_box" >
+      <div>
+        <h4>Spotify</h4>
+          <!-- https://open.spotify.com/embed/user/wqnnhxpun61r6jelsrev3cu39/playlist/4XkQEtevEYhPcgSXMufTKc   Matvey -->
+          <iframe id="spotify" src="https://open.spotify.com/embed/playlist/5sTHqyG2DAwmTCopHXHRdz" width="100%" height="300" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>   
+      </div>
+        <input type="text" id="playlist_link" placeholder="Copy playlist link here">
+        <input type="text" id="playlist_name" placeholder="Name your playlist">
+        <p onclick="changeSpotify()" class="button">Change Playlist</p>
+        <p id="invalid_link" style="display: none">Invalid link, sorry.</p>
+        <script type="text/javascript">
+          
+          function changeSpotify(){
+            //https://open.spotify.com/playlist/5sTHqyG2DAwmTCopHXHRdz
+            link = document.getElementById('playlist_link').value
+            name = document.getElementById('playlist_name').value
+            document.getElementById('playlist_link').value = ''
+            document.getElementById('playlist_name').value = ''
+            if(link.includes("open.spotify.com/")){
+              link_split = link.split("open.spotify.com/")
+              link = link_split[0]+"open.spotify.com/embed/"+link_split[1]
+              document.getElementById('spotify').src = link;
+              document.getElementById('invalid_link').style.display = "none";
+              var form = new FormData();
+              form.append('link', link);
+              form.append('name', name);
+
+              $.ajax({
+                type: 'POST',
+                url: '/addSpotify',
+                data: form,
+                cache: false,
+                processData: false,
+                contentType: false,
+
+              })
+            }
+            else{
+              document.getElementById('invalid_link').style.display = "block";
+            }
+          }
+          function changeSpotifyTo(link){
+            document.getElementById('spotify').src = link;
+            document.getElementById('invalid_link').style.display = "none";
+          }
+          
+        </script>
+        <div>
+          <h4>Saved Playlists:</h4>
+          {%for playlist in playlists%}
+            <div style="float: left" class="button" onclick="changeSpotifyTo('{{playlist[1]}}')">{{playlist[0]}}</div>
+          {%endfor%}
+        </div>
+        <br><br>
+    </div>
+
+    <!-- <div class="left_box" >
+      <h4>Google</h4>
+      <input type="text" id="google-text"  placeholder="How many cups in 1 lb?">
+      <span onclick="Redirect to google in new tab">
+
+      
+    </div> -->
+
+  </div>
+
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+  <!--BOOTSTRAP Javascript import-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <script>
+
+
+
+
+/*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+
+$(".ing_box").click(function() {
+  autocomplete(this,{{ingredient_list|tojson}},'5px')
+});
+
+</script>
+
+{%endblock%}
+  
+
+</body>
+</html>

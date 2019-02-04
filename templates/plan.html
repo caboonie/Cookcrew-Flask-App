@@ -1,0 +1,140 @@
+ <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <script>
+    $(document).ready(function(){
+    var d = new Date();
+    var weeknum = d.getDay();
+    var Sunday = new Date();
+    Sunday.setDate(Sunday.getDate() - weeknum);
+    var Saturday = new Date();
+    Saturday.setDate(Sunday.getDate() + 6);
+    //$("#sunday_date").html('<input type="hidden" value='+Sunday+'>');
+    document.getElementById("sunday_date").value=[Sunday.getFullYear(),Sunday.getMonth(),Sunday.getDate()];
+    $("#demo").html("<span>Menu for the week of "+ Sunday.toDateString()  + "</span>");
+    $("#next").click(function() {
+      Sunday.setDate(Sunday.getDate()+7)
+      Saturday.setDate(Saturday.getDate() + 7);
+      $("#demo").html("<span>Menu for the week of "+ Sunday.toDateString() +"</span>");
+      $("#sunday_date").html('<input value=7>')
+      //$("#sunday_date").value(Sunday.toDateString())
+      document.getElementById("sunday_date").value=[Sunday.getFullYear(),Sunday.getMonth(),Sunday.getDate()];
+      });
+    $("#prev").click(function() {
+      Sunday.setDate(Sunday.getDate()-7)
+      Saturday.setDate(Saturday.getDate() - 7);
+      $("#demo").html("<span>Menu for the week of "+ Sunday.toDateString() +"</span>");
+      $("#sunday_date").html('<input value=7>')
+      //$("#sunday_date").value(Sunday.toDateString())
+      document.getElementById("sunday_date").value=[Sunday.getFullYear(),Sunday.getMonth(),Sunday.getDate()];
+    });
+
+  days = ["Sunday Brunch","Sunday Dinner","Monday Dinner","Tuesday Dinner","Wednesday Dinner","Thursday Dinner"];
+  for (i = 0; i < days.length; i++) {
+      var a=$("#default_day").clone(true)
+      a.attr("hidden",false);
+      a.children("#day_id").html("<h3 style='display:inline;'>"+days[i]+"</h3>")
+      a.children("#dish_id").attr("name","day_"+i+"_dish")
+      a.children("#checkbox").attr('name',"Meal"+i)
+      //a.children("#dish_id").attr("id","dish_id_"+i)
+      //a.children("#default_form").data("day_num",i)
+      a.attr("data-day_num",i)
+      a.attr("data-count",0)
+      //a.children("#add_button").data("day_num",i)
+      //a.children("#day_id").html("<h3>"+days[i]+String(a.data("day_num"))+"</h3>")
+      //$(this).parent()
+      a.insertBefore("#submit_button");
+
+  }
+
+  var count=0;
+  $(".add").click(function() {
+      var a=$("#default_form").clone(true)
+      a.attr("hidden",false);
+      var num = $(this).parent().parent().data("day_num");
+      //var count = $(this).parent().parent().data("count");
+      a.children("#dish_id").attr("name","day_"+String(num)+"_dish_"+String(count))
+      //$(this).parent()
+      a.insertBefore(this);
+      //$(this).parent().parent().attr("data-count",count+1);
+      count=count+1;
+      return false;
+  });
+
+  $(".remove").click(function() {
+    count=count-1;
+    $(this).parent().remove();
+  });
+
+  });
+
+  </script>
+  </head>
+
+<body>
+  {% extends 'basic_page.html' %}
+
+
+  
+  {% block content %}
+
+ <div class=page_title>
+      <span id="demo" >test</span>
+  </div>
+  <div class=page_content>
+
+  <form method=post autocomplete="off">
+    
+    <span id="prev" class="btn btn-secondary" >Previous</span>
+    <span id="next" class="btn btn-primary" >Next Week</span>
+    <input type="hidden" id="sunday_date" name = "sunday_date" value = "empty">
+    <br>
+    <br>
+    <label>Number of Servings:</label> <input type="text" name="servings" value="24">
+    <p></p>
+    <div id=default_day data-day_num=2 hidden>
+      <h3 id="day_id" style='display:inline;'>Day Title:</h3> <input type="checkbox" id="checkbox" name="day_name" value="True" checked> <br>
+      <div hidden id=default_form class="autocomplete" style="width:300px;">
+          <label>Dish:</label> <input class="recipe_box" data-offset="70px"  id="dish_id" type="text" placeholder="asparagus">
+          <span style='display:inline;' class="remove">Remove</span>
+      </div>
+  
+
+      <p >
+          <span id="add_button" class="add">Add dish</span>
+      </p>
+    </div>
+
+    
+    <button id="submit_button" class="btn btn-primary" type="submit">Submit</button>
+  </form>
+  {% endblock %}
+</div>
+
+{% block scripts %}
+    {{ super() }}
+  <!--BOOTSTRAP Javascript import-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+ <script>
+
+
+$(".recipe_box").click(function() {
+  autocomplete(this,{{recipe_list|tojson}}, this.getAttribute("data-offset"))
+});
+
+</script>
+{% endblock %}
+
+
+
+</body>
+</html>

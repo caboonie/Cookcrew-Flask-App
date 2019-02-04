@@ -1,0 +1,70 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+
+    
+    <style type="text/css">
+      .page_title {
+        /*size: 100px;
+        height: 80px; */
+        font-size: 60px;
+        color: black;
+        border-bottom : 1px solid grey;
+        height: 80px;
+        padding: 10px;
+        margin: 20px;
+        
+      }
+      .page_content {
+        padding: 10px;
+        margin: 20px;
+      }
+
+    </style>
+
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"> 
+
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+
+
+
+   
+ 
+ 
+  </head>
+<body>
+  {% extends 'basic_page.html' %}
+
+  
+  {% block content %}
+
+
+
+  
+  <div class=page_title>
+      Login
+  </div>
+  <div class=page_content>
+    <form method=post autocomplete="off">
+      <span>Username</span><input type="text" name="username"> <br>
+      <span>Password</span><input type="password" name="password"> <br>
+      <span>Remember Me</span><input type="checkbox" id="checkbox" name="remember"> <br>
+      <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
+
+
+
+
+
+
+  
+  <!--BOOTSTRAP Javascript import-->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+</div>
+
+  {% endblock %}
+
+</body>
+</html>

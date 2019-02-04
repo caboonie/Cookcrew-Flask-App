@@ -1,0 +1,70 @@
+<html>
+  <head>
+
+    
+    
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"> 
+
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <script src='/static/js/recorderjs/recorder.js'></script>
+    <script src='/static/js/main_for_all.js'></script>
+    <script src='/static/js/autocomplete.js'></script>
+    
+   
+  </head>
+<body>
+  <!--Navbar-->
+
+  {% extends 'bootstrap/base.html' %}
+
+
+
+
+
+  {% block navbar %}
+      <nav class="navbar navbar-dark fb-color" style=" white-space: nowrap; ">
+        <a href="/" class="text-logo navbar-brand" >DH Cookcrew</a>
+        <a href="/recipes" class="text-logo navbar-brand" >Recipes</a>
+        <a href="/plan" class="text-logo navbar-brand">Plan</a>
+        <a href="/menus" class="text-logo navbar-brand">Menus</a>
+        <a href="/shopper" class="text-logo navbar-brand">Shopper</a>
+        <a href="/add" class="btn btn-outline-light"></a>
+        <a href="/speech" class="btn btn-outline-light">Voice Command</a>
+        <a href="/add" class="btn btn-outline-light">Add new recipe!</a>
+        {% if current_user.is_anonymous %}
+          <a href="/login" class="btn btn-outline-light">Login</a>
+          <a href="/signup" class="btn btn-outline-light">Signup</a>
+        {% else %}
+          <a href="/" class="btn btn-outline-light">{{current_user.username}}</a>
+          <a href="/logout" class="btn btn-outline-light">Logout</a>
+        {% endif %}
+
+        
+      </nav>
+      <!--Navbar End-->
+      {% with messages = get_flashed_messages() %}
+         {% if messages %}
+            <ul>
+               {% for message in messages %}
+               <li>{{ message }}</li>
+               {% endfor %}
+            </ul>
+         {% endif %}
+      {% endwith %}
+  {% endblock %}
+
+  {% block header %}{% endblock %}
+  {% block content %}{% endblock %}
+
+
+
+
+</body>
+</html>

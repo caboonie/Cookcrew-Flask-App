@@ -1,0 +1,114 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+
+    
+    <style type="text/css">
+      .page_title {
+        /*size: 100px;
+        height: 80px; */
+        font-size: 60px;
+        color: black;
+        border-bottom : 1px solid grey;
+        height: 80px;
+        padding: 10px;
+        margin: 20px;
+        
+      }
+      .page_content {
+        padding: 10px;
+        margin: 20px;
+      }
+
+    </style>
+
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"> 
+
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+    $(document).ready(function(){
+    var weekday = new Array(7);
+    weekday[0] =  "Sunday";
+    weekday[1] = "Monday";
+    weekday[2] = "Tuesday";
+    weekday[3] = "Wednesday";
+    weekday[4] = "Thursday";
+    weekday[5] = "Friday";
+    weekday[6] = "Saturday";
+    var d = new Date();
+    var day = d.toString().slice(4,10);
+
+    $("#day").html("<h3>Showing menu for "+weekday[d.getDay()]+", "+day+"</h3>");
+   
+ 
+    
+
+    });
+  </script>
+  </head>
+<body>
+  {% extends 'basic_page.html' %}
+
+  
+  {% block content %}
+
+  
+  <div class=page_title>
+      Menu
+  </div>
+  <div class=page_content>
+  {% if current_user.is_anonymous %}
+          <h3>You need to <a href="/login">login</a> to view menus</h3>
+  {% else %}
+          
+  
+  
+    <form method=post autocomplete="off">
+      <h3 id="day"></h3>
+      <button class="btn btn-secondary " type="submit" name="previous" value="previous">Previous</button>
+      <button class="btn btn-secondary theme_bg_color"  type="submit" name="this" value="this">This Week</button>
+      <button class="btn btn-secondary"  type="submit" name="next" value="next">Next Week</button>
+    </form>
+
+
+    <p id="demo">test</p>
+
+
+    {% if menu_exist%}
+    <script>
+      $("#demo").html("<b>The menu today is:</b>");
+    </script>
+    {%for menu in menus%}
+    <h1>
+      <a href="menus/{{menu.id}}">{{menu.day_name}}</a>
+    </h1>
+    <h3>
+      {{menu.dishes}}
+    </h3>
+    {%endfor%}
+    <a href="/week_menus" ><p>Menus for this week!</p></a>
+
+    {%else%}
+    <script>
+      $("#demo").html("<b>There is no menu today</b>");
+    </script>
+    {%endif%}
+    {% endif %}
+    
+    {% endblock %}
+
+</div>
+
+  
+  <!--BOOTSTRAP Javascript import-->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+
+</body>
+</html>

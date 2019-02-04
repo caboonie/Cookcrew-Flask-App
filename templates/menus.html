@@ -1,0 +1,33 @@
+ <html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style_test.css')}}">
+    <!--BOOTSTRAP CSS import-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  </head>
+<body>
+  {% extends 'basic_page.html' %}
+
+  {% block content %}
+  <div class=page_title>
+      Menus
+  </div>
+  <div class=page_content>
+
+  <table style="width:100%">
+    {% for menu in menus%}
+      <tr>
+        <td><a href="menus/{{menu.id}}">{{menu.day}} - {{menu.day_name}}</a></td>
+      </tr>
+    {% endfor%}
+  </table>
+</div>
+  {%endblock%}
+
+  
+  <!--BOOTSTRAP Javascript import-->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  
+</body>
+</html>
